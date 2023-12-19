@@ -18,7 +18,6 @@ object Destinations {
 
 @Composable
 fun AppNavHost(
-    modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     startDestination: String = MEASURE_ROUTE
 ) {
@@ -28,7 +27,7 @@ fun AppNavHost(
     ) {
         composable(MEASURE_ROUTE) {
             MeasureScreen(
-                navController = navController
+                navController
                 //onNavigateToReport = {navController.navigate(REPORT_ROUTE)}
             )
         }
@@ -36,11 +35,11 @@ fun AppNavHost(
             REPORT_ROUTE,
             arguments = listOf(
                 navArgument("positionName") {type = NavType.StringType},
-                navArgument("angle") {type = NavType.FloatType}
+                navArgument("angle") {type = NavType.StringType}
             )
         ) { backStackEntry ->
             val positionName = backStackEntry.arguments?.getString("positionName")
-            val angle = backStackEntry.arguments?.getFloat("angle")
+            val angle = backStackEntry.arguments?.getString("angle")
             WifiMeasureReport(positionName, angle)
         }
     }

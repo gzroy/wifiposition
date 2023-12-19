@@ -1,26 +1,14 @@
 package cn.roygao.wifiposition
 
-import android.content.Context
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -33,39 +21,55 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import cn.roygao.wifiposition.ui.theme.WifiPositionTheme
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 
-//onNavigateToReport: () -> Unit
 @Composable
 fun MeasureScreen(
     navController: NavController,
     measureViewModel: WifiMeasureViewModel = viewModel()
 ) {
-    val ctx = LocalContext.current
-    val sensorManager: SensorManager = ctx.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    val directionSensorEventListener = object: SensorEventListener {
-        override fun onSensorChanged(event: SensorEvent?) {
-            if (event?.sensor.type == Sensor.)
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    var angle by remember { mutableStateOf<Int>(0) }
+
+    DisposableEffect(Unit) {
+        val dataManager = SensorDataManager(context)
+        dataManager.init()
+
+        val job = scope.launch {
+            dataManager.data
+                .receiveAsFlow()
+                .onEach { angle = it }
+                .collect()
         }
 
-        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-            TODO("Not yet implemented")
+        onDispose {
+            dataManager.cancel()
+            job.cancel()
         }
-
     }
 
 
-
     //val measureUiState = measureViewModel.uiState.collectAsState()
-    Column(modifier = Modifier.padding(all = 8.dp)) {
+    Column(modifier = Modifier
+        .padding(all = 8.dp)
+        .fillMaxSize()) {
         Text(
             text = stringResource(R.string.screen_title),
             style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.height(8.dp))
         val imageModifier = Modifier
             .height(150.dp)
             .fillMaxWidth()
-            .border(BorderStroke(1.dp, Color.Black))
+            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.primary))
+            .background(MaterialTheme.colorScheme.background, RectangleShape)
         Image(
             painter = painterResource(id = R.drawable.indooratlas),
             contentDescription = null,
@@ -81,30 +85,37 @@ fun MeasureScreen(
         )
         Spacer(modifier = Modifier.height(8.dp))
         TextField(
-            value = "123.5",
+            value = angle.toString(),
             onValueChange = { },
             label = { Text(text = stringResource(R.string.label_current_angle), style = MaterialTheme.typography.bodyMedium)},
             readOnly = true,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
-        TextButton(
-            onClick = { navController.navigate("report/${measureViewModel.positionName}/123.5") },
-            shape = RectangleShape,
-            contentPadding = PaddingValues(16.dp),
+        Button(
+            onClick = { navController.navigate("report/${measureViewModel.positionName}/$angle") },
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.5.dp, MaterialTheme.colorScheme.secondary, CircleShape)
         ) {
-            Text(
-                text = "Measure",
-                style = MaterialTheme.typography.bodyMedium)
+            Text("Measure")
         }
     }
 }
 
-@Preview(showBackground = true)
+
+@Preview(
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "DefaultPreviewDark"
+)
+@Preview(
+    uiMode = Configuration.UI_MODE_NIGHT_NO,
+    name = "DefaultPreviewLight"
+)
 @Composable
 fun PreviewMeasureScreen() {
-    MeasureScreen(rememberNavController())
+    WifiPositionTheme {
+        Surface(tonalElevation = 5.dp) {
+            MeasureScreen(rememberNavController())
+        }
+    }
 }

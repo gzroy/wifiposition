@@ -6,5 +6,7 @@
     <string name="report_header_bssid">BSS ID</string>
     <string name="report_header_strength">Signal Strength</string>
     <string name="report_title">Wifi Measurement Report</string>
-    <string name="report_position_name">Current Position</string>
+    <string name="report_position_name">Position</string>
+    <string name="report_angle">Angle</string>
+    <string name="report_result">Scan Results</string>
 </resources>
